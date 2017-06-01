@@ -1,4 +1,0 @@
-sceneSetups:
-- path: Assets/Elementals/Demo/Volcanic Rock.unity
-  isLoaded: 1
-  isActive: 1
