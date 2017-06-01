@@ -26,7 +26,7 @@ public class VirtualButtonEventHandler : MonoBehaviour, IVirtualButtonEventHandl
 		btn_1 = transform.Find("hs1").gameObject;
 		btn_2 = transform.Find("hs2").gameObject;
         // We don't want to show Jin during the startup
-		model_1.SetActive(false);
+		model_1.SetActive(true);
 		model_2.SetActive(false);
 		btn_1.SetActive(true);
 		btn_2.SetActive(true);
