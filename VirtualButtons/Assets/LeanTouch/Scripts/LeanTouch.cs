@@ -5,6 +5,7 @@ using System.Collections.Generic;
 namespace Lean.Touch
 {
 	// If you add this component to your scene, then it will convert all mouse and touch data into easy to use data
+	// You can access this data via Lean.Touch.LeanTouch.Instance.Fingers, or hook into the Lean.Touch.LeanTouch.On___ events.
 	// NOTE: To prevent lag you may want to edit your ScriptExecutionOrder to force this to update before your scripts
 	[ExecuteInEditMode]
 	[DisallowMultipleComponent]
@@ -38,24 +39,54 @@ namespace Lean.Touch
 		public static System.Action<List<LeanFinger>> OnGesture;
 
 		[Tooltip("This allows you to set how many seconds are required between a finger down/up for a tap to be registered")]
-		public float TapThreshold = 0.5f;
+		public float TapThreshold = DefaultTapThreshold;
+
+		public const float DefaultTapThreshold = 0.5f;
 
 		public static float CurrentTapThreshold
 		{
 			get
 			{
-				return Instances.Count > 0 ? Instances[0].TapThreshold : 0.5f;
+				return Instances.Count > 0 ? Instances[0].TapThreshold : DefaultTapThreshold;
 			}
 		}
 
 		[Tooltip("This allows you to set how many pixels of movement (relative to the ReferenceDpi) are required within the TapThreshold for a swipe to be triggered")]
-		public float SwipeThreshold = 50.0f;
+		public float SwipeThreshold = DefaultSwipeThreshold;
+
+		public const float DefaultSwipeThreshold = 50.0f;
+
+		public static float CurrentSwipeThreshold
+		{
+			get
+			{
+				return Instances.Count > 0 ? Instances[0].SwipeThreshold : DefaultSwipeThreshold;
+			}
+		}
 
 		[Tooltip("This allows you to set the default DPI you want the input scaling to be based on")]
-		public int ReferenceDpi = 200;
+		public int ReferenceDpi = DefaultReferenceDpi;
+
+		public const int DefaultReferenceDpi = 200;
+
+		public static int CurrentReferenceDpi
+		{
+			get
+			{
+				return Instances.Count > 0 ? Instances[0].ReferenceDpi : DefaultReferenceDpi;
+			}
+		}
 
 		[Tooltip("This allows you to set which layers your GUI is on, so it can be ignored by each finger")]
-		public LayerMask GuiLayers = -1;
+		public LayerMask GuiLayers = Physics.DefaultRaycastLayers;
+
+		public static LayerMask CurrentGuiLayers
+		{
+			get
+			{
+				return Instances.Count > 0 ? Instances[0].GuiLayers : (LayerMask)Physics.DefaultRaycastLayers;
+			}
+		}
 
 		[Tooltip("This allows you to enable recording of finger movements")]
 		public bool RecordFingers = true;
@@ -107,22 +138,17 @@ namespace Lean.Touch
 		{
 			get
 			{
-				var scalingFactor = 1.0f;
-				var referenceDpi  = 200;
+				// Get the current screen DPI
+				var dpi = Screen.dpi;
 
-				// Grab the current reference DPI, if it exists
-				if (Instances.Count > 0)
+				// If it's 0 or less, it's invalid, so return the default scale of 1.0
+				if (dpi <= 0)
 				{
-					referenceDpi = Instances[0].ReferenceDpi;
+					return 1.0f;
 				}
 
-				// If this screen has a known DPI, scale the value based on it
-				if (Screen.dpi > 0 && referenceDpi > 0)
-				{
-					scalingFactor = Mathf.Sqrt(referenceDpi) / Mathf.Sqrt(Screen.dpi);
-				}
-
-				return scalingFactor;
+				// DPI seems valid, so scale it against the reference DPI
+				return Mathf.Sqrt(CurrentReferenceDpi) / Mathf.Sqrt(dpi);
 			}
 		}
 
@@ -168,11 +194,19 @@ namespace Lean.Touch
 		}
 
 		// If camera is null, this will fill it with the main camera and return true if either exists
-		public static bool GetCamera(ref Camera camera)
+		public static bool GetCamera(ref Camera camera, GameObject gameObject = null)
 		{
 			if (camera == null)
 			{
-				camera = Camera.main;
+				if (gameObject != null)
+				{
+					camera = gameObject.GetComponent<Camera>();
+				}
+
+				if (camera == null)
+				{
+					camera = Camera.main;
+				}
 			}
 
 			return camera != null;
@@ -195,21 +229,15 @@ namespace Lean.Touch
 			return RaycastGui(screenPosition).Count > 0;
 		}
 
-		// This will return all the RaycastResults under the 'screenPosition'
+		// This will return all the RaycastResults under the 'screenPosition' using the current layerMask
 		// The first result (0) should be the top most UI element
 		public static List<RaycastResult> RaycastGui(Vector2 screenPosition)
 		{
-			// Try and get the current GuiLayers setting
-			var layerMask = -1;
-
-			if (Instances.Count > 0)
-			{
-				layerMask = Instances[0].GuiLayers;
-			}
-
-			return RaycastGui(screenPosition, layerMask);
+			return RaycastGui(screenPosition, CurrentGuiLayers);
 		}
 
+		// This will return all the RaycastResults under the 'screenPosition' using the specified layerMask
+		// The first result (0) should be the top most UI element
 		public static List<RaycastResult> RaycastGui(Vector2 screenPosition, LayerMask layerMask)
 		{
 			tempRaycastResults.Clear();
@@ -329,14 +357,21 @@ namespace Lean.Touch
 
 		protected virtual void Update()
 		{
-			// If this isn't the first instance, skip update
-			if (Instances[0] != this)
+			// Only run the update methods if this is the first instance (i.e. if your scene has more than one LeanTouch component, only use the first)
+			if (Instances[0] == this)
 			{
-				return;
-			}
+				// Prepare old finger data for new information
+				BeginFingers();
 
-			UpdateFingers();
-			UpdateEvents();
+				// Poll current finger + mouse data and conver it to fingers
+				PollFingers();
+
+				// Process any no longer used fingers
+				EndFingers();
+
+				// Update events based on new finger data
+				UpdateEvents();
+			}
 		}
 
 		protected virtual void OnGUI()
@@ -360,13 +395,6 @@ namespace Lean.Touch
 					}
 				}
 			}
-		}
-
-		private void UpdateFingers()
-		{
-			BeginFingers();
-			PollFingers();
-			EndFingers();
 		}
 
 		// Update all Fingers and InactiveFingers so they're ready for the new frame
