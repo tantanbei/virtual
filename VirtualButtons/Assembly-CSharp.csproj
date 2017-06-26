@@ -129,6 +129,7 @@
      <Compile Include="Assets\script\LoadPerssitentData.cs" />
      <Compile Include="Assets\script\LoadPrefbe.cs" />
      <Compile Include="Assets\script\VirtualButtonEventHandler.cs" />
+     <Compile Include="Assets\script\VirtualHandler.cs" />
      <None Include="Assets\Plugins\Android\AndroidManifest.xml" />
      <None Include="Assets\LeanTouch\Examples\Fonts\OFL.txt" />
      <None Include="Assets\Vuforia\Shaders\ColoredLines.shader" />
