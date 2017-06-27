@@ -13,8 +13,14 @@ public class VirtualHandler : MonoBehaviour
 	{
 		mUICanvas = GameObject.Find("ImageTaget");
 
-		glass = Resources.Load("glass") as GameObject;
-		singleSofa = Resources.Load ("singleSofa") as GameObject;
+		glass = Resources.Load("GlassPrefab") as GameObject;
+		singleSofa = Resources.Load ("SingleSofaPrefab") as GameObject;
+
+		glass = Instantiate (glass);
+		singleSofa = Instantiate (singleSofa);
+
+		Hide (glass);
+		Hide (singleSofa);
 	}
 
 	void OnGUI ()
@@ -22,28 +28,32 @@ public class VirtualHandler : MonoBehaviour
 		if (GUI.Button (new Rect (10, 10, 200, 200), "change model")) {
 			if (i % 2 == 1) {
 				Debug.Log ("Show glass");
-				glass = Instantiate (glass);
-				glass.GetComponent<Renderer> ().enabled = true;
-//				glass.transform.parent = mUICanvas.transform;
-				Renderer[] lChildRenderers=singleSofa.GetComponentsInChildren<Renderer>();
-				foreach ( Renderer lRenderer in lChildRenderers)
-				{
-					lRenderer.enabled=false;
-				}
+				Show (glass);
+				Hide (singleSofa);
 			} else {
 				Debug.Log ("Show singleSofa");
-				singleSofa = Instantiate (singleSofa);
-//				singleSofa.transform.parent = mUICanvas.transform;
-
-				Renderer[] lChildRenderers=singleSofa.GetComponentsInChildren<Renderer>();
-				foreach ( Renderer lRenderer in lChildRenderers)
-				{
-					lRenderer.enabled=true;
-				}
-
-				glass.GetComponent<Renderer> ().enabled = false;
+				Show (singleSofa);
+				Hide (glass);
 			}
 			i++;
+		}
+	}
+
+	void Show(GameObject game)
+	{
+		Renderer[] lChildRenderers=game.GetComponentsInChildren<Renderer>();
+		foreach ( Renderer lRenderer in lChildRenderers)
+		{
+			lRenderer.enabled=true;
+		}
+	}
+
+	void Hide(GameObject game)
+	{
+		Renderer[] lChildRenderers=game.GetComponentsInChildren<Renderer>();
+		foreach ( Renderer lRenderer in lChildRenderers)
+		{
+			lRenderer.enabled=false;
 		}
 	}
 }
