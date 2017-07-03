@@ -19,6 +19,13 @@ public class VirtualHandler : MonoBehaviour
 		glass = Instantiate (glass);
 		singleSofa = Instantiate (singleSofa);
 
+		glass.AddComponent<Lean.Touch.LeanScale> ();
+		glass.AddComponent<Lean.Touch.LeanRotate> ();
+		glass.AddComponent<Lean.Touch.LeanTouch> ();
+		singleSofa.AddComponent<Lean.Touch.LeanScale> ();
+		singleSofa.AddComponent<Lean.Touch.LeanTouch> ();
+		singleSofa.AddComponent<Lean.Touch.LeanRotate> ();
+
 		Hide (glass);
 		Hide (singleSofa);
 	}
