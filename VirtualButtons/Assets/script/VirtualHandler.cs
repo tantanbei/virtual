@@ -22,9 +22,12 @@ public class VirtualHandler : MonoBehaviour
 		glass.AddComponent<Lean.Touch.LeanScale> ();
 		glass.AddComponent<Lean.Touch.LeanRotate> ();
 		glass.AddComponent<Lean.Touch.LeanTouch> ();
+		glass.AddComponent<Lean.Touch.LeanTranslate> ();
+
 		singleSofa.AddComponent<Lean.Touch.LeanScale> ();
 		singleSofa.AddComponent<Lean.Touch.LeanTouch> ();
 		singleSofa.AddComponent<Lean.Touch.LeanRotate> ();
+		singleSofa.AddComponent<Lean.Touch.LeanTranslate> ();
 
 		Hide (glass);
 		Hide (singleSofa);
